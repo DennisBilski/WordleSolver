@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Wordle Helper Surface/iOS v13.2</title>
+<title>Wordle Helper Surface/iOS v13.3</title>
 <style>
   :root { --green:#6aaa64; --yellow:#c9b458; --gray:#787c7e; --empty:#d3d6da; --text:#1a1a1b; --key:#d3d6da; --blue:#1885ff; }
   * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -68,7 +68,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="topbar"><div class="menuWrap"><button class="hamb" onclick="toggleMenu()">☰</button><div id="menuBox" class="menuBox">Version v13.2.1<br><span style="font-size:13px;font-weight:700;color:#666">Answers: original + NYT additions</span><label class="menuLabel" for="startWordInput">Starting word</label><div class="startWordRow"><input id="startWordInput" class="startWordInput" maxlength="5" value="SANER" autocomplete="off" autocapitalize="characters" spellcheck="false" onfocus="hideKeyboard()" onclick="event.stopPropagation(); this.select();" onpointerdown="event.stopPropagation();" onkeydown="event.stopPropagation();" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)"><button class="menuSmallBtn" onpointerdown="event.stopPropagation();" onclick="saveStartWord(event)">Save</button></div><div id="startWordMsg" class="menuMsg"></div></div></div><div class="title">Wordle Helper</div><div class="icons"><span>💡</span><span>📊</span></div></div>
+  <div class="topbar"><div class="menuWrap"><button class="hamb" onclick="toggleMenu()">☰</button><div id="menuBox" class="menuBox">Version v13.3<br><span style="font-size:13px;font-weight:700;color:#666">Answers: original + NYT additions</span><label class="menuLabel" for="startWordInput">Starting word</label><div class="startWordRow"><input id="startWordInput" class="startWordInput" maxlength="5" value="SANER" autocomplete="off" autocapitalize="characters" spellcheck="false" onfocus="hideKeyboard()" onclick="event.stopPropagation(); this.select();" onpointerdown="event.stopPropagation();" onkeydown="event.stopPropagation();" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)"><button class="menuSmallBtn" onpointerdown="event.stopPropagation();" onclick="saveStartWord(event)">Save</button></div><div id="startWordMsg" class="menuMsg"></div></div></div><div class="title">Wordle Helper</div><div class="icons"><span>💡</span><span>📊</span></div></div>
   <div class="wrap">
     <div id="grid" class="grid">
       <div class="tile" id="t00" onclick="tileTap(0,0)"></div><div class="tile" id="t01" onclick="tileTap(0,1)"></div><div class="tile" id="t02" onclick="tileTap(0,2)"></div><div class="tile" id="t03" onclick="tileTap(0,3)"></div><div class="tile" id="t04" onclick="tileTap(0,4)"></div><div class="tile" id="t10" onclick="tileTap(1,0)"></div><div class="tile" id="t11" onclick="tileTap(1,1)"></div><div class="tile" id="t12" onclick="tileTap(1,2)"></div><div class="tile" id="t13" onclick="tileTap(1,3)"></div><div class="tile" id="t14" onclick="tileTap(1,4)"></div><div class="tile" id="t20" onclick="tileTap(2,0)"></div><div class="tile" id="t21" onclick="tileTap(2,1)"></div><div class="tile" id="t22" onclick="tileTap(2,2)"></div><div class="tile" id="t23" onclick="tileTap(2,3)"></div><div class="tile" id="t24" onclick="tileTap(2,4)"></div><div class="tile" id="t30" onclick="tileTap(3,0)"></div><div class="tile" id="t31" onclick="tileTap(3,1)"></div><div class="tile" id="t32" onclick="tileTap(3,2)"></div><div class="tile" id="t33" onclick="tileTap(3,3)"></div><div class="tile" id="t34" onclick="tileTap(3,4)"></div><div class="tile" id="t40" onclick="tileTap(4,0)"></div><div class="tile" id="t41" onclick="tileTap(4,1)"></div><div class="tile" id="t42" onclick="tileTap(4,2)"></div><div class="tile" id="t43" onclick="tileTap(4,3)"></div><div class="tile" id="t44" onclick="tileTap(4,4)"></div><div class="tile" id="t50" onclick="tileTap(5,0)"></div><div class="tile" id="t51" onclick="tileTap(5,1)"></div><div class="tile" id="t52" onclick="tileTap(5,2)"></div><div class="tile" id="t53" onclick="tileTap(5,3)"></div><div class="tile" id="t54" onclick="tileTap(5,4)"></div>
@@ -286,7 +286,22 @@ function scoreLists(words){
  const greenPos={}; for(let r=0;r<6;r++) for(let c=0;c<5;c++) if(colors[r][c]==='green') greenPos[c]=grid[r][c];
  const score=w=>[...w].reduce((s,ch,i)=>s+(greenPos[i]===ch?0:(counts[ch]||0)),0);
  const uniqueScore=w=>{ const seen=new Set(); let s=0; [...w].forEach((ch,i)=>{ if(greenPos[i]===ch) return; if(seen.has(ch)) return; seen.add(ch); s += counts[ch]||0; }); return s; };
- return [words.map(w=>[w,score(w)]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])), words.map(w=>[w,uniqueScore(w)]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))];
+ const isUniqueCandidate=w=>{
+   const seen=new Set();
+   const greenLetters=new Set(Object.values(greenPos));
+   for(let i=0;i<5;i++){
+     const ch=w[i];
+     if(greenPos[i]===ch) continue;
+     // For the Unique tab, fixed green-position letters are treated as already known.
+     // Every remaining non-green tile must test a different letter, and it should not
+     // duplicate an already-known green letter elsewhere.
+     if(greenLetters.has(ch) || seen.has(ch)) return false;
+     seen.add(ch);
+   }
+   return true;
+ };
+ const uniqueWords = words.filter(isUniqueCandidate);
+ return [words.map(w=>[w,score(w)]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])), uniqueWords.map(w=>[w,uniqueScore(w)]).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0]))];
 }
 function updateResults(){ current = ANSWERS.filter(passes); document.getElementById('status').textContent='Words left: '+current.length; [cachedScore,cachedUnique]=scoreLists(current); if(sheetOpen) populateSheet(); }
 function listHtml(items, scored=false){
@@ -309,7 +324,7 @@ function insertWordFromList(word){
   closeSheet();
   renderAll();
 }
-function populateSheet(){ const title=['Words to pick from','Score list','Unique-letter score'][activeTab]; document.getElementById('sheetTitle').textContent=title+'  ·  '+current.length+' left'; const body=document.getElementById('sheetBody'); if(activeTab===0) body.innerHTML=listHtml(current,false); if(activeTab===1) body.innerHTML=listHtml(cachedScore,true); if(activeTab===2) body.innerHTML=listHtml(cachedUnique,true); }
+function populateSheet(){ const title=['Words to pick from','Score list','Unique letters only'][activeTab]; const shown=(activeTab===2?cachedUnique.length:current.length); document.getElementById('sheetTitle').textContent=title+'  ·  '+shown+' shown / '+current.length+' left'; const body=document.getElementById('sheetBody'); if(activeTab===0) body.innerHTML=listHtml(current,false); if(activeTab===1) body.innerHTML=listHtml(cachedScore,true); if(activeTab===2) body.innerHTML=listHtml(cachedUnique,true); }
 function showTab(n){ activeTab=n; sheetOpen=true; document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',i===n)); populateSheet(); document.getElementById('sheet').classList.add('open'); }
 function closeSheet(){ sheetOpen=false; document.getElementById('sheet').classList.remove('open'); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); }
 
