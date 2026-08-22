@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Wordle Helper Surface/iOS v14.9</title>
+<title>Wordle Helper Surface/iOS v14.9.1</title>
 <style>
   :root { --green:#6aaa64; --yellow:#c9b458; --gray:#787c7e; --empty:#d3d6da; --text:#1a1a1b; --key:#d3d6da; --blue:#1885ff; }
   * { box-sizing:border-box; -webkit-tap-highlight-color: transparent; }
@@ -37,6 +37,9 @@
   .tile.green { background:var(--green); border-color:var(--green); color:white; }
   .status { text-align:center; font-size:22px; font-weight:800; margin:1px 0 3px; color:#777; flex:0 0 auto; }
   .rowBtns { display:flex; justify-content:center; gap:8px; margin:3px auto; flex-wrap:wrap; flex:0 0 auto; }
+  .smartRow { display:flex; justify-content:center; gap:8px; margin:4px auto 3px; flex-wrap:nowrap; flex:0 0 auto; width:100%; }
+  .smartRow .smartBtn { max-width:260px; flex:0 1 auto; }
+  .smartRow .submitBtn { flex:0 0 auto; padding-left:16px; padding-right:16px; }
   button { font:inherit; font-weight:800; border-radius:20px; border:2px solid #c7c9cc; background:white; padding:9px 14px; min-height:44px; cursor:pointer; }
   .btn-gray { background:var(--gray); color:white; border-color:var(--gray); }
   .btn-yellow { background:var(--yellow); color:white; border-color:var(--yellow); }
@@ -67,23 +70,23 @@
   .key.graybad::after { content:""; }
   .hardMsg { text-align:center; min-height:22px; font-size:14px; font-weight:900; color:#e11d48; margin:0 8px 3px; position:relative; z-index:24; }
   .status.extraMode { color:#e11d48; }
-  .extraNotice { display:flex; align-items:center; justify-content:center; visibility:hidden; height:24px; text-align:center; color:#e11d48; font-size:20px; line-height:24px; font-weight:900; margin:-2px 0 0; letter-spacing:.5px; flex:0 0 auto; gap:8px; }
+  .extraNotice { display:flex; align-items:center; justify-content:center; visibility:hidden; height:24px; text-align:center; color:#e11d48; font-size:20px; line-height:24px; font-weight:900; margin:-2px 0 0; letter-spacing:.5px; flex:0 0 auto; gap:8px; position:relative; z-index:7; }
   .extraNotice::before, .extraNotice::after { content:""; height:4px; background:#ff0000; flex:1 1 auto; border-radius:999px; }
   .extraNoticeText { flex:0 0 auto; white-space:nowrap; }
   .extraNotice.show { visibility:visible; }
-  .extraBox { display:none; position:absolute; left:10px; right:10px; border:4px solid #ff0000; border-radius:8px; pointer-events:none; z-index:5; }
+  .extraBox { display:none; position:absolute; left:10px; right:10px; border:4px solid #ff0000; border-bottom:0; border-radius:8px 8px 0 0; pointer-events:none; z-index:5; }
   .extraBox.show { display:block; }
   @media (max-height: 820px) {
     .topbar { height:52px; flex-basis:52px; } .title { font-size:31px; } .icons { font-size:24px; gap:12px; }
     .wrap { padding-top:5px; } .grid { width:min(82vw, 310px); gap:5px; margin:5px auto 6px; }
     .tile { font-size:36px; } .status { font-size:20px; margin-bottom:2px; }
-    button { min-height:38px; padding:7px 12px; } .extraNotice { height:22px; line-height:22px; font-size:18px; }
+    button { min-height:38px; padding:7px 12px; } .smartRow .smartBtn { max-width:238px; } .extraNotice { height:22px; line-height:22px; font-size:18px; }
     .tabs { bottom:18px; } .sheet { bottom:74px; } .kbd { bottom:74px; }
   }
   @media (max-height: 700px) {
     .topbar { height:46px; flex-basis:46px; } .title { font-size:28px; }
     .grid { width:min(78vw, 270px); gap:4px; margin:4px auto 5px; } .tile { font-size:31px; }
-    .status { font-size:18px; } .rowBtns { gap:6px; margin:2px auto; } button { min-height:34px; padding:5px 10px; font-size:14px; }
+    .status { font-size:18px; } .rowBtns { gap:6px; margin:2px auto; } .smartRow { gap:6px; margin:2px auto; } .smartRow .smartBtn { max-width:205px; } button { min-height:34px; padding:5px 10px; font-size:14px; }
     .extraNotice { height:20px; line-height:20px; font-size:16px; } .tabs { height:50px; bottom:10px; } .tab { font-size:15px; padding:8px 4px; }
     .sheet { bottom:66px; } .kbd { bottom:66px; }
   }
@@ -91,7 +94,7 @@
 </head>
 <body>
 <div class="app">
-  <div class="topbar"><div class="menuWrap"><button class="hamb" onclick="toggleMenu()">☰</button><div id="menuBox" class="menuBox">Version v14.9<br><span style="font-size:13px;font-weight:700;color:#666">Answers: original + NYT additions</span><div class="menuTiny">Answer words loaded: <span id="answerCountMenu">0</span></div><label class="menuLabel" for="startWordInput">Starting word</label><div class="startWordRow"><input id="startWordInput" class="startWordInput" maxlength="5" value="SANER" autocomplete="off" autocapitalize="characters" spellcheck="false" onfocus="hideKeyboard()" onclick="event.stopPropagation(); this.select();" onpointerdown="event.stopPropagation();" onkeydown="event.stopPropagation();" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)"><button class="menuSmallBtn" onpointerdown="event.stopPropagation();" onclick="saveStartWord(event)">Save</button></div><div id="startWordMsg" class="menuMsg"></div><label class="menuLabel" for="answerWordInput">Add answer word</label><div class="answerWordRow"><input id="answerWordInput" class="answerWordInput" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="event.stopPropagation(); this.select();" onpointerdown="event.stopPropagation();" onkeydown="event.stopPropagation();" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)"><button class="menuSmallBtn" onpointerdown="event.stopPropagation();" onclick="saveAnswerWord(event)">Add</button></div><div id="answerWordMsg" class="menuMsg"></div><div id="addedWords" class="addedWords"></div><div class="menuHelp"><b>Directions</b><br>Use your Surface keyboard, or tap Keyboard for the on-screen keys.<br><br>Press Enter to accept a row. Hard-way rules are checked then.<br><br>Tap a filled square to cycle gray → yellow → green.</div></div></div><div class="title">Wordle Helper</div><div class="icons"><span>💡</span><span>📊</span></div></div>
+  <div class="topbar"><div class="menuWrap"><button class="hamb" onclick="toggleMenu()">☰</button><div id="menuBox" class="menuBox">Version v14.9.1<br><span style="font-size:13px;font-weight:700;color:#666">Answers: original + NYT additions</span><div class="menuTiny">Answer words loaded: <span id="answerCountMenu">0</span></div><label class="menuLabel" for="startWordInput">Starting word</label><div class="startWordRow"><input id="startWordInput" class="startWordInput" maxlength="5" value="SANER" autocomplete="off" autocapitalize="characters" spellcheck="false" onfocus="hideKeyboard()" onclick="event.stopPropagation(); this.select();" onpointerdown="event.stopPropagation();" onkeydown="event.stopPropagation();" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)"><button class="menuSmallBtn" onpointerdown="event.stopPropagation();" onclick="saveStartWord(event)">Save</button></div><div id="startWordMsg" class="menuMsg"></div><label class="menuLabel" for="answerWordInput">Add answer word</label><div class="answerWordRow"><input id="answerWordInput" class="answerWordInput" maxlength="5" autocomplete="off" autocapitalize="characters" spellcheck="false" onclick="event.stopPropagation(); this.select();" onpointerdown="event.stopPropagation();" onkeydown="event.stopPropagation();" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z]/g,'').slice(0,5)"><button class="menuSmallBtn" onpointerdown="event.stopPropagation();" onclick="saveAnswerWord(event)">Add</button></div><div id="answerWordMsg" class="menuMsg"></div><div id="addedWords" class="addedWords"></div><div class="menuHelp"><b>Directions</b><br>Use your Surface keyboard, or tap Keyboard for the on-screen keys.<br><br>Press Enter to accept a row. Hard-way rules are checked then.<br><br>Tap a filled square to cycle gray → yellow → green.</div></div></div><div class="title">Wordle Helper</div><div class="icons"><span>💡</span><span>📊</span></div></div>
   <div class="wrap">
     <div id="grid" class="grid">
       <div class="tile" id="t00" onclick="tileTap(0,0)"></div><div class="tile" id="t01" onclick="tileTap(0,1)"></div><div class="tile" id="t02" onclick="tileTap(0,2)"></div><div class="tile" id="t03" onclick="tileTap(0,3)"></div><div class="tile" id="t04" onclick="tileTap(0,4)"></div><div class="tile" id="t10" onclick="tileTap(1,0)"></div><div class="tile" id="t11" onclick="tileTap(1,1)"></div><div class="tile" id="t12" onclick="tileTap(1,2)"></div><div class="tile" id="t13" onclick="tileTap(1,3)"></div><div class="tile" id="t14" onclick="tileTap(1,4)"></div><div class="tile" id="t20" onclick="tileTap(2,0)"></div><div class="tile" id="t21" onclick="tileTap(2,1)"></div><div class="tile" id="t22" onclick="tileTap(2,2)"></div><div class="tile" id="t23" onclick="tileTap(2,3)"></div><div class="tile" id="t24" onclick="tileTap(2,4)"></div><div class="tile" id="t30" onclick="tileTap(3,0)"></div><div class="tile" id="t31" onclick="tileTap(3,1)"></div><div class="tile" id="t32" onclick="tileTap(3,2)"></div><div class="tile" id="t33" onclick="tileTap(3,3)"></div><div class="tile" id="t34" onclick="tileTap(3,4)"></div><div class="tile" id="t40" onclick="tileTap(4,0)"></div><div class="tile" id="t41" onclick="tileTap(4,1)"></div><div class="tile" id="t42" onclick="tileTap(4,2)"></div><div class="tile" id="t43" onclick="tileTap(4,3)"></div><div class="tile" id="t44" onclick="tileTap(4,4)"></div><div class="tile" id="t50" onclick="tileTap(5,0)"></div><div class="tile" id="t51" onclick="tileTap(5,1)"></div><div class="tile" id="t52" onclick="tileTap(5,2)"></div><div class="tile" id="t53" onclick="tileTap(5,3)"></div><div class="tile" id="t54" onclick="tileTap(5,4)"></div>
@@ -104,7 +107,10 @@
       <button class="btn-blue" onclick="resetAll()">Reset</button>
       <button class="btn-blue" id="kbdBtn" onclick="toggleKeyboard()">Keyboard</button>
       <button class="btn-blue" id="startBtn" onclick="fillStartWord()">SANER</button>
-      <button class="btn-blue" id="randomBtn" onclick="fillRandomWord()">Random</button>
+    </div>
+    <div class="smartRow">
+      <button class="btn-blue smartBtn" id="randomBtn" onclick="fillRandomWord()">Random</button>
+      <button class="btn-blue submitBtn" id="submitBtn" onclick="nextRow()">SUBMIT</button>
     </div>
     <div class="kbd" id="keyboard">
       <div class="kbdrow">
@@ -556,7 +562,10 @@ function updateExtraModeUI(){
         const tr=tile.getBoundingClientRect();
         const sr=statusEl.getBoundingClientRect();
         const top=Math.max(0, tr.top - wr.top - 6);
-        const bottom=Math.max(top+20, sr.bottom - wr.top + 6);
+        const noticeEl=document.getElementById('extraNotice');
+        const nr=noticeEl ? noticeEl.getBoundingClientRect() : sr;
+        // The red box bottom is the center of the USING EXTRA LIST line, so the label is part of the box.
+        const bottom=Math.max(top+20, (nr.top + nr.height/2) - wr.top);
         box.style.top=top+'px';
         box.style.height=(bottom-top)+'px';
       }
@@ -621,7 +630,7 @@ document.addEventListener('keydown', function(e){
 initKeyboardLetters();
 loadAnswerAdditions();
 loadStartWord();
-// v14.9: make first page load behave exactly like pressing Reset and lock extra-list red zone.
+// v14.9.1: phone SUBMIT button and integrated locked extra-list red box.
 resetAll();
 </script>
 </body>
